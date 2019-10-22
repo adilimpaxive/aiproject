@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "621232368067",
+    "firebase_url": "https://textrecognitionapp-fdb7a.firebaseio.com",
+    "project_id": "textrecognitionapp-fdb7a",
+    "storage_bucket": "textrecognitionapp-fdb7a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:621232368067:android:0a7ad412be8ad2b87e7576",
+        "android_client_info": {
+          "package_name": "com.pakistan.textrecognition_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "621232368067-uvl9dbbl94p8sn5qjje72j1904rgqre4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pakistan.textrecognition_app",
+            "certificate_hash": "0d98123f92644553880810086929ced66c3e35fa"
+          }
+        },
+        {
+          "client_id": "621232368067-ja6fq9cqahc453dueugrde31i4rauj4j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDS0kXZsaRZ012pKR5p6-i-YRVR6b7Cihw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "621232368067-ja6fq9cqahc453dueugrde31i4rauj4j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
