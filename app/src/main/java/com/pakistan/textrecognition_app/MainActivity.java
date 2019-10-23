@@ -19,6 +19,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -32,6 +33,8 @@ import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextDetector;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 
 import org.apache.poi.ss.usermodel.Row;
@@ -52,8 +55,10 @@ import java.util.List;
 import static android.Manifest.permission_group.CAMERA;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
+
     private static final int PICK_FROM_GALLERY = 1;
-    private Button mBtn,mBtn_detect;
+    private Button mBtn, mBtn_detect;
     private ImageView mimage;
     private TextView mTv;
     private Context ctx;
@@ -62,16 +67,17 @@ public class MainActivity extends AppCompatActivity {
     //WritableWorkbook workbook;
     Bitmap bitmap;
     String txt;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mBtn=findViewById(R.id.button);
-        mBtn_detect=findViewById(R.id.button2);
-        mimage=findViewById(R.id.imageView);
-        mTv=findViewById(R.id.textView);
-      //  System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
-     // System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
+        mBtn = findViewById(R.id.button);
+        mBtn_detect = findViewById(R.id.button2);
+        mimage = findViewById(R.id.imageView);
+        mTv = findViewById(R.id.textView);
+        //  System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
+        // System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
 
 
        /* if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -82,9 +88,6 @@ public class MainActivity extends AppCompatActivity {
 
             return;
         }*/
-
-
-
 
 
         mBtn.setOnClickListener(new View.OnClickListener() {
@@ -107,107 +110,138 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
         mBtn_detect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // your handler code here
 
 
-              detect();
+                detect();
             }
         });
-
 
 
     }
 
 
+    public void detect() {
+        if (bitmap == null) {
+
+            Toast.makeText(this, "image is null", Toast.LENGTH_SHORT).show();
 
 
+        } else {
+            FirebaseVisionImage firebaseVisionImage = FirebaseVisionImage.fromBitmap(bitmap);
+            FirebaseVisionTextDetector firebaseVisionTextDetector =
+                    FirebaseVision.getInstance().getVisionTextDetector();
 
 
-
-            public void detect(){
-if (bitmap==null){
-
-    Toast.makeText(this, "image is null", Toast.LENGTH_SHORT).show();
-
-
-
-}else {
-    FirebaseVisionImage firebaseVisionImage=FirebaseVisionImage.fromBitmap(bitmap);
-    FirebaseVisionTextDetector firebaseVisionTextDetector =
-            FirebaseVision.getInstance().getVisionTextDetector();
-
-
-    firebaseVisionTextDetector.detectInImage(firebaseVisionImage).
-              addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
-                @Override
-                public void onSuccess(FirebaseVisionText texts) {
-                    processTextRecognitionResult(texts);
-                }
-            })
-            .addOnFailureListener(
-                    new OnFailureListener() {
+            firebaseVisionTextDetector.detectInImage(firebaseVisionImage).
+                    addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
                         @Override
-                        public void onFailure(@NonNull Exception e) {
-                            // Task failed with an exception
-                            e.printStackTrace();
+                        public void onSuccess(FirebaseVisionText texts) {
+                            Log.d(TAG, "_TEXT: " + texts.toString());
+                            processText(texts);
+                            //processTextRecognitionResult(texts);
                         }
-                    });
-}
+                    })
+                    .addOnFailureListener(
+                            new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    // Task failed with an exception
+                                    e.printStackTrace();
+                                }
+                            });
+        }
 
-}
+    }
 
+    private void processText(FirebaseVisionText texts) {
+        List<FirebaseVisionText.Block> blocks = texts.getBlocks();
+
+        for(FirebaseVisionText.Block block : blocks){
+            List<FirebaseVisionText.Line> lines = block.getLines();
+            Log.d(TAG, "_BLOCK: "+block.getText());
+
+            for(FirebaseVisionText.Line line : lines){
+                List<FirebaseVisionText.Element> elements = line.getElements();
+                Log.d(TAG, "_BLOCK_LINE: "+line.getText());
+
+                for(FirebaseVisionText.Element element : elements){
+                    Log.d(TAG, "_ELEMENT: "+element.getText());
+
+                    String str = element.getText();
+
+                    // Extract Numbers from Convert Element Text
+                    String[] numbers = str.split("(?<=\\D)(?=\\d)");
+                    boolean isDigits = TextUtils.isDigitsOnly(numbers[0]);
+
+                    if(isDigits){
+                        Log.d(TAG, "_NUMBER: "+numbers[0]);
+                    }else
+                        Log.d(TAG, "_STRING: "+str);
+                }
+
+            }
+
+        }
+
+    }
+
+    private void setImageCropper(Uri uri){
+        CropImage
+                .activity(uri)
+                .setGuidelines(CropImageView.Guidelines.ON)
+                .setAspectRatio(16,9)
+                .setAutoZoomEnabled(true)
+                .start(this);
+    }
+
+    // This function is written by Adil Farooq
     private void processTextRecognitionResult(FirebaseVisionText texts) {
 
 
-        List<FirebaseVisionText.Block> blocks=texts.getBlocks();
-        if (blocks.size()==0){
+        List<FirebaseVisionText.Block> blocks = texts.getBlocks();
+        if (blocks.size() == 0) {
 
 
             Toast.makeText(this, "no data is there", Toast.LENGTH_SHORT).show();
-        }
-        else{
+        } else {
 
+            for (FirebaseVisionText.Block block : blocks) {
 
-            for(FirebaseVisionText.Block block:texts.getBlocks())
-            {
+                String text = block.getLines().get(0).getElements().get(0).getText();
 
-                String text=block.getText();
-
-             all = new ArrayList<>();
+                Log.d(TAG, "_BLOCK: " + block);
+                Log.d(TAG, "_BLOCK_LINE: " + block);
+                Log.d(TAG, "_LINE_ELEMENT_TEXT: " + text);
+                all = new ArrayList<>();
 
                 // Adding new elements to the ArrayList
-              all.add(block.getText());
+                all.add(block.getText());
 
-TestModel tm=new TestModel();
+                TestModel tm = new TestModel();
 
-
-                for (int i=0; i<all.size();i++){
+                for (int i = 0; i < all.size(); i++) {
 
                     mTv.append(all.get(i));
-                    Log.d("names are ",all.get(i));
+                    Log.d("_ALL_LIST_NAME [" + i + "] ", all.get(i));
 
                     mTv.append("\n");
 
+                    Log.d("_DD", Arrays.toString(all.get(i).split(",")));
 
+                    Object o = Arrays.toString(all.get(0).split(","));
 
-                  Log.d("dd", Arrays.toString(all.get(i).split(",")));
+                    Log.d("_OBJECT_IS ", String.valueOf(o));
 
-                  Object o=Arrays.toString(all.get(2).split(","));
-
-                  Log.d("objet is ", String.valueOf(o));
-
-                  tm.getName(String.valueOf(o));
-                  Log.d("s", ""+tm.getName(String.valueOf(o)));
+                    tm.getName(String.valueOf(o));
+                    Log.d("_NAME", "" + tm.getName(String.valueOf(o)));
 
                     // all.get(i).split(",");
-                   // book();
+                    // book();
 
                 }
-
-
 
 
             }
@@ -224,11 +258,8 @@ TestModel tm=new TestModel();
                     Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
 
-
                     galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
                     startActivityForResult(Intent.createChooser(galleryIntent, "Select Picture"), PICK_FROM_GALLERY);
-
-
 
 
                     startActivityForResult(galleryIntent, PICK_FROM_GALLERY);
@@ -242,48 +273,36 @@ TestModel tm=new TestModel();
     }
 
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PICK_FROM_GALLERY && resultCode == RESULT_OK && data != null && data.getData() != null) {
+        if(resultCode == RESULT_OK && data != null){
+            if (requestCode == PICK_FROM_GALLERY && data.getData() != null) {
+                Uri uri = data.getData();
+                setImageCropper(uri); // this line is added by Jalal
+                Log.d(TAG, "_URI: "+uri);
+            }
+            if(requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE){
+                CropImage.ActivityResult result = CropImage.getActivityResult(data);
+                Uri croppedImageUri = result.getUri();
 
-            Uri uri = data.getData();
+                // This try-catch code is written by Adil Farooq but copied & moved from
+                // 'PICK_FROM_GALLERY if' by Jalal
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), croppedImageUri);
+                    // Log.d(TAG, String.valueOf(bitmap));
 
-            try {
-
-
-
-
-
-
-                bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                // Log.d(TAG, String.valueOf(bitmap));
-
-                mimage.setImageBitmap(bitmap);
-            } catch (IOException e) {
-                e.printStackTrace();
+                    mimage.setImageBitmap(bitmap);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
 
+
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

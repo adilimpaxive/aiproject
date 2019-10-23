@@ -14,10 +14,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-
-
-
-
     buildTypes {
         release {
             minifyEnabled false
@@ -38,4 +34,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
     implementation 'com.android.support:multidex:1.0.3'
     //implementation files('libs/poishadow-all.jar')
+
+
+    api 'com.theartofdev.edmodo:android-image-cropper:2.8.0'
 }
