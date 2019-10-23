@@ -13,6 +13,9 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+    }
 
     buildTypes {
         release {
@@ -29,12 +32,12 @@ dependencies {
     implementation 'com.google.firebase:firebase-ml-vision:16.0.0'
     testImplementation 'junit:junit:4.12'
     //implementation 'org.apache.poi:poi:3.17'
-   // implementation 'org.apache.poi:poi-ooxml:3.17'
+    // implementation 'org.apache.poi:poi-ooxml:3.17'
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
     implementation 'com.android.support:multidex:1.0.3'
     //implementation files('libs/poishadow-all.jar')
-
-
     api 'com.theartofdev.edmodo:android-image-cropper:2.8.0'
+   // implementation files('libs/activation-1.1.1.jar')
+    implementation files('libs/poishadow-all.jar')
 }

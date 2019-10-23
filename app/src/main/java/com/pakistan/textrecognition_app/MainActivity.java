@@ -16,6 +16,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -37,17 +38,18 @@ import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
 
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -58,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private static final int PICK_FROM_GALLERY = 1;
+    private static final int PERMISSION_REQUEST_CODE =2 ;
     private Button mBtn, mBtn_detect;
     private ImageView mimage;
     private TextView mTv;
@@ -67,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     //WritableWorkbook workbook;
     Bitmap bitmap;
     String txt;
-
+    WriteGuru99ExcelFile objExcelFile = new WriteGuru99ExcelFile();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -167,11 +170,46 @@ public class MainActivity extends AppCompatActivity {
                 List<FirebaseVisionText.Element> elements = line.getElements();
                 Log.d(TAG, "_BLOCK_LINE: "+line.getText());
 
+                String str = line.getText();
+
+                String[] valueToWrite = {str};
+
+                File sdcard = Environment.getExternalStorageDirectory();
+                File dir = new File(sdcard.getAbsolutePath() + "/text/");
+                dir.mkdir();
+                File file = new File(dir, "sample.txt");
+                FileOutputStream os = null;
+                try {
+                    os = new FileOutputStream(file);
+                    byte[] buffer = str.getBytes();
+                    os.write(buffer, 0, buffer.length);
+                    os.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }finally{
+                    if(os != null) {
+                        try {
+                            os.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                mTv.append(str);
+                mTv.append("\n");
+
+                ReadBtn();
+
+
                 for(FirebaseVisionText.Element element : elements){
                     Log.d(TAG, "_ELEMENT: "+element.getText());
 
-                    String str = element.getText();
-
+                   /* String str = element.getText();
+                    mTv.append(str);
+                    mTv.append("\n");
+*/
                     // Extract Numbers from Convert Element Text
                     String[] numbers = str.split("(?<=\\D)(?=\\d)");
                     boolean isDigits = TextUtils.isDigitsOnly(numbers[0]);
@@ -266,6 +304,10 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     //do something like displaying a message that he didn`t allow the app to access gallery and you wont be able to let him select from gallery
                 }
+
+
+
+
                 break;
         }
 
@@ -305,8 +347,74 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void ReadBtn() {
+        //reading text from file
+        try {
+
+
+            File sdcard = Environment.getExternalStorageDirectory();
+            File dir = new File(sdcard.getAbsolutePath() + "/text/");
+            File file = new File(dir, "sample.txt");
+
+//Read text from file
+            StringBuilder text = new StringBuilder();
+
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                String line;
+
+                while ((line = br.readLine()) != null) {
+                  text.append(line);
+                    text.append('\n');
+                    Log.d("text is", String.valueOf(text.append(line)));
+
+
+
+                }
+                br.close();
+            }
+            catch (IOException e) {
+                //You'll need to add proper error handling here
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+}
 
 
 
