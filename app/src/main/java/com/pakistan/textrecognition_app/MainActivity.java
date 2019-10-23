@@ -38,6 +38,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -179,21 +181,28 @@ if (bitmap==null){
                 // Adding new elements to the ArrayList
               all.add(block.getText());
 
-
+TestModel tm=new TestModel();
 
 
                 for (int i=0; i<all.size();i++){
 
                     mTv.append(all.get(i));
                     Log.d("names are ",all.get(i));
+
                     mTv.append("\n");
 
 
 
                   Log.d("dd", Arrays.toString(all.get(i).split(",")));
 
+                  Object o=Arrays.toString(all.get(2).split(","));
 
-                // all.get(i).split(",");
+                  Log.d("objet is ", String.valueOf(o));
+
+                  tm.getName(String.valueOf(o));
+                  Log.d("s", ""+tm.getName(String.valueOf(o)));
+
+                    // all.get(i).split(",");
                    // book();
 
                 }
