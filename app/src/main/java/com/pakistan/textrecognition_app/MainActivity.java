@@ -4,19 +4,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -27,6 +21,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -39,26 +34,29 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 
 
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
-
-import static android.Manifest.permission_group.CAMERA;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-
+  //  Workbook wb;
+  String[] valueToWrite;
     private static final int PICK_FROM_GALLERY = 1;
     private static final int PERMISSION_REQUEST_CODE =2 ;
     private Button mBtn, mBtn_detect;
@@ -66,10 +64,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView mTv;
     private Context ctx;
     List<String> all;
+List<ArrayList> arrayLists;
+    List<String> stringList;
+
+    File dir;
+    private String dataDi,str;
     File directory, sd, file;
     //WritableWorkbook workbook;
     Bitmap bitmap;
     String txt;
+    File sdcard;
     WriteGuru99ExcelFile objExcelFile = new WriteGuru99ExcelFile();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,18 +83,11 @@ public class MainActivity extends AppCompatActivity {
         mBtn_detect = findViewById(R.id.button2);
         mimage = findViewById(R.id.imageView);
         mTv = findViewById(R.id.textView);
-        //  System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
-        // System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
 
 
-       /* if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions((Activity) MainActivity.this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
 
-            return;
-        }*/
+
 
 
         mBtn.setOnClickListener(new View.OnClickListener() {
@@ -116,11 +113,17 @@ public class MainActivity extends AppCompatActivity {
         mBtn_detect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // your handler code here
-
-
                 detect();
+
+
+              //  test();
             }
         });
+
+
+
+       // saveExcelFile("MyExcel.xls");
+
 
 
     }
@@ -170,10 +173,18 @@ public class MainActivity extends AppCompatActivity {
                 List<FirebaseVisionText.Element> elements = line.getElements();
                 Log.d(TAG, "_BLOCK_LINE: "+line.getText());
 
-                String str = line.getText();
+           str = line.getText();
 
-                String[] valueToWrite = {str};
+        stringList=new ArrayList<String>();
 
+
+
+
+
+               // saveExcelFile("MyExcel.xls");
+
+
+/*
                 File sdcard = Environment.getExternalStorageDirectory();
                 File dir = new File(sdcard.getAbsolutePath() + "/text/");
                 dir.mkdir();
@@ -196,11 +207,26 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                     }
-                }
+                }*/
                 mTv.append(str);
                 mTv.append("\n");
 
-                ReadBtn();
+
+
+              /*  intent.putStringArrayListExtra("test", test);
+                startActivity(intent);
+                */
+
+
+
+
+
+
+
+
+                stringList.add(str);
+
+                //ReadBtn();
 
 
                 for(FirebaseVisionText.Element element : elements){
@@ -218,13 +244,28 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "_NUMBER: "+numbers[0]);
                     }else
                         Log.d(TAG, "_STRING: "+str);
+
+
                 }
 
             }
 
         }
 
+        ArrayList<String> test = new ArrayList<String>();
+        test.add(str);
+
+
+        Log.d("test is ",test.toString());
+
+        saveExcelFile();
     }
+
+
+
+
+
+
 
     private void setImageCropper(Uri uri){
         CropImage
@@ -345,31 +386,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public void ReadBtn() {
         //reading text from file
         try {
@@ -407,6 +423,158 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+  /*  public  boolean isReadStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.v(TAG,"Permission is granted1");
+                return true;
+            } else {
+
+                Log.v(TAG,"Permission is revoked1");
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 3);
+                return false;
+            }
+        }
+        else { //permission is automatically granted on sdk<23 upon installation
+            Log.v(TAG,"Permission is granted1");
+            return true;
+        }
+    }
+
+    public  boolean isWriteStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.v(TAG,"Permission is granted2");
+                return true;
+            } else {
+
+                Log.v(TAG,"Permission is revoked2");
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
+                return false;
+            }
+        }
+        else { //permission is automatically granted on sdk<23 upon installation
+            Log.v(TAG,"Permission is granted2");
+            return true;
+        }
+    }
+*/
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+
+    private void saveExcelFile() {
+        String path;
+        File dir;
+        if (!isExternalStorageAvailable() || isExternalStorageReadOnly()) {
+            Log.e("Failed", "Storage not available or read only");
+            return;
+        }
+        boolean success = false;
+
+        //New Workbook
+        Workbook wb = new HSSFWorkbook();
+
+        Cell c = null;
+
+        //Cell style for header row
+        CellStyle cs = wb.createCellStyle();
+        cs.setFillForegroundColor(HSSFColor.LIME.index);
+        cs.setFillPattern(HSSFCellStyle.SOLID_FOREGROUND);
+        cs.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+
+        CellStyle cellStyle = wb.createCellStyle();
+        cellStyle.setAlignment(HSSFCellStyle.ALIGN_LEFT);
+
+        //New Sheet
+        Sheet sheet1 = null;
+        sheet1 = wb.createSheet("myOrder");
+
+        // Generate column headings
+        Row row = null;
+
+
+        int rowCount = 0;
+
+        row = sheet1.createRow(0);
+
+       // c = row.createCell(0);
+
+      /*  for (String value :stringList){
+
+            c.setCellValue(String.valueOf(stringList));
+            row.createCell(1).setCellValue(String.valueOf(stringList));
+
+
+            c.setCellStyle(cs);
+
+        }
+*/
+
+        sheet1.setColumnWidth(0, (15 * 500));
+       /* sheet1.setColumnWidth(1, (15 * 500));
+        sheet1.setColumnWidth(2, (15 * 500));*/
+        int val = 0;
+        int k = 1;
+        for(int i=1;i<stringList.size();i++){
+            row = sheet1.createRow(k);
+            for(int j=0;j<3;j++){
+                c = row.createCell(j);
+                c.setCellValue(stringList.get(i));
+              //  Log.d("list is",stringList.get(i));
+                c.setCellStyle(cellStyle);
+             //   val++;
+            }
+            sheet1.setColumnWidth(i, (15 * 500));
+            k++;
+        }
+        path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/EXCEL/";
+        dir = new File(path);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File file = new File(dir, "MyExcel.xls");
+        FileOutputStream os = null;
+
+        try {
+            os = new FileOutputStream(file);
+            wb.write(os);
+            Log.w("FileUtils", "Writing file" + file);
+            success = true;
+        } catch (IOException e) {
+            Log.w("FileUtils", "Error writing " + file, e);
+        } catch (Exception e) {
+            Log.w("FileUtils", "Failed to save file", e);
+        } finally {
+            try {
+                if (null != os)
+                    os.close();
+            } catch (Exception ex) {
+            }
+        }
+    }
+
+    public static boolean isExternalStorageReadOnly() {
+        String extStorageState = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(extStorageState)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isExternalStorageAvailable() {
+        String extStorageState = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
+            return true;
+        }
+        return false;
+    }
+
+
+
+
 
 
 
@@ -427,47 +595,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-  /*  private void pickFromGallery(){
-        //Create an Intent with action as ACTION_PICK
-        Intent intent=new Intent(Intent.ACTION_PICK);
-        // Sets the type as image/*. This ensures only components of type image are selected
-        intent.setType("image/*");
-        //We pass an extra array with the accepted mime types. This will ensure only components with these MIME types as targeted.
-        String[] mimeTypes = {"image/jpeg", "image/png"};
-        intent.putExtra(Intent.EXTRA_MIME_TYPES,mimeTypes);
-        // Launching the Intent
-        startActivityForResult(intent,GALLERY_REQUEST_CODE);
-
-    }
-
-
-    public void onActivityResult(int requestCode,int resultCode,Intent data){
-
-        // Result code is RESULT_OK only if the user selects an Image
-        if (resultCode == Activity.RESULT_OK)
-            switch (requestCode){
-                case GALLERY_REQUEST_CODE:
-                    //data.getData return the content URI for the selected Image
-                    Uri selectedImage = data.getData();
-
-                    String[] filePathColumn = { MediaStore.Images.Media.DATA };
-                    // Get the cursor
-                    Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
-                    // Move to first row
-                    cursor.moveToFirst();
-                    //Get the column index of MediaStore.Images.Media.DATA
-                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                    //Gets the String value in the column
-                    String imgDecodableString = cursor.getString(columnIndex);
-
-                    cursor.close();
-                    // Set the Image in ImageView after decoding the String
-                    mimage.setImageBitmap(BitmapFactory.decodeFile(imgDecodableString));
-
-                    break;
-
-            }
-*/
 
 
 
@@ -482,39 +609,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-  /*  public void chooseImage() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
-    }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-
-            Uri uri = data.getData();
-
-            try {
-
-
-
-
-
-
-            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                // Log.d(TAG, String.valueOf(bitmap));
-
-                mimage.setImageBitmap(bitmap);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-
-    }*/
 
 
 

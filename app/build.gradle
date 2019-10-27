@@ -38,6 +38,9 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
     //implementation files('libs/poishadow-all.jar')
     api 'com.theartofdev.edmodo:android-image-cropper:2.8.0'
-   // implementation files('libs/activation-1.1.1.jar')
+    // implementation files('libs/activation-1.1.1.jar')
     implementation files('libs/poishadow-all.jar')
+    // implementation 'com.aspose:aspose-cells:19.9'
+    implementation files('libs/aspose-cells-19.9-android.via.java.jar')
+    implementation files('libs/jxl.jar')
 }
