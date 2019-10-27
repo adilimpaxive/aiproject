@@ -55,8 +55,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
-  //  Workbook wb;
-  String[] valueToWrite;
+    //  Workbook wb;
+    String[] valueToWrite;
     private static final int PICK_FROM_GALLERY = 1;
     private static final int PERMISSION_REQUEST_CODE =2 ;
     private Button mBtn, mBtn_detect;
@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView mTv;
     private Context ctx;
     List<String> all;
-List<ArrayList> arrayLists;
+    List<ArrayList> arrayLists;
     List<String> stringList;
 
     File dir;
@@ -73,6 +73,7 @@ List<ArrayList> arrayLists;
     //WritableWorkbook workbook;
     Bitmap bitmap;
     String txt;
+    ArrayList<String> test;
     File sdcard;
     WriteGuru99ExcelFile objExcelFile = new WriteGuru99ExcelFile();
     @Override
@@ -83,8 +84,8 @@ List<ArrayList> arrayLists;
         mBtn_detect = findViewById(R.id.button2);
         mimage = findViewById(R.id.imageView);
         mTv = findViewById(R.id.textView);
-
-
+        stringList=new ArrayList<String>();
+     test   = new ArrayList<String>();
 
 
 
@@ -116,13 +117,13 @@ List<ArrayList> arrayLists;
                 detect();
 
 
-              //  test();
+                //  test();
             }
         });
 
 
 
-       // saveExcelFile("MyExcel.xls");
+        // saveExcelFile("MyExcel.xls");
 
 
 
@@ -147,6 +148,9 @@ List<ArrayList> arrayLists;
                         public void onSuccess(FirebaseVisionText texts) {
                             Log.d(TAG, "_TEXT: " + texts.toString());
                             processText(texts);
+
+
+
                             //processTextRecognitionResult(texts);
                         }
                     })
@@ -165,6 +169,7 @@ List<ArrayList> arrayLists;
     private void processText(FirebaseVisionText texts) {
         List<FirebaseVisionText.Block> blocks = texts.getBlocks();
 
+
         for(FirebaseVisionText.Block block : blocks){
             List<FirebaseVisionText.Line> lines = block.getLines();
             Log.d(TAG, "_BLOCK: "+block.getText());
@@ -172,16 +177,18 @@ List<ArrayList> arrayLists;
             for(FirebaseVisionText.Line line : lines){
                 List<FirebaseVisionText.Element> elements = line.getElements();
                 Log.d(TAG, "_BLOCK_LINE: "+line.getText());
+                str=line.getText();
+                Object a=line.getText();
 
-           str = line.getText();
-
-        stringList=new ArrayList<String>();
-
-
+                stringList.add(a.toString());
 
 
 
-               // saveExcelFile("MyExcel.xls");
+
+                // Adding text in line to ArrayList
+                test.add(str);
+
+                // saveExcelFile("MyExcel.xls");
 
 
 /*
@@ -208,8 +215,8 @@ List<ArrayList> arrayLists;
                         }
                     }
                 }*/
-                mTv.append(str);
-                mTv.append("\n");
+                //    mTv.append(str);
+                //   mTv.append("\n");
 
 
 
@@ -224,7 +231,7 @@ List<ArrayList> arrayLists;
 
 
 
-                stringList.add(str);
+                //  stringList.add(str);
 
                 //ReadBtn();
 
@@ -252,11 +259,12 @@ List<ArrayList> arrayLists;
 
         }
 
-        ArrayList<String> test = new ArrayList<String>();
-        test.add(str);
+        //ArrayList<String> test = new ArrayList<String>();
+        //test.add(str);
 
 
-        Log.d("test is ",test.toString());
+
+        Log.d("test is ",stringList.toString());
 
         saveExcelFile();
     }
@@ -403,7 +411,7 @@ List<ArrayList> arrayLists;
                 String line;
 
                 while ((line = br.readLine()) != null) {
-                  text.append(line);
+                    text.append(line);
                     text.append('\n');
                     Log.d("text is", String.valueOf(text.append(line)));
 
@@ -500,7 +508,7 @@ List<ArrayList> arrayLists;
 
         row = sheet1.createRow(0);
 
-       // c = row.createCell(0);
+        // c = row.createCell(0);
 
       /*  for (String value :stringList){
 
@@ -523,9 +531,9 @@ List<ArrayList> arrayLists;
             for(int j=0;j<3;j++){
                 c = row.createCell(j);
                 c.setCellValue(stringList.get(i));
-              //  Log.d("list is",stringList.get(i));
+                //  Log.d("list is",stringList.get(i));
                 c.setCellStyle(cellStyle);
-             //   val++;
+                //   val++;
             }
             sheet1.setColumnWidth(i, (15 * 500));
             k++;
