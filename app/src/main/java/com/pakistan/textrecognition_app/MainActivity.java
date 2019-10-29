@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
     //WritableWorkbook workbook;
     Bitmap bitmap;
     String txt;
+    Object a;
     ArrayList<String> test;
     File sdcard;
     WriteGuru99ExcelFile objExcelFile = new WriteGuru99ExcelFile();
@@ -106,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
 
-                //chooseImage();
+
             }
         });
 
@@ -117,13 +118,12 @@ public class MainActivity extends AppCompatActivity {
                 detect();
 
 
-                //  test();
             }
         });
 
 
 
-        // saveExcelFile("MyExcel.xls");
+
 
 
 
@@ -172,13 +172,13 @@ public class MainActivity extends AppCompatActivity {
 
         for(FirebaseVisionText.Block block : blocks){
             List<FirebaseVisionText.Line> lines = block.getLines();
-            Log.d(TAG, "_BLOCK: "+block.getText());
+           // Log.d(TAG, "_BLOCK: "+block.getText());
 
             for(FirebaseVisionText.Line line : lines){
                 List<FirebaseVisionText.Element> elements = line.getElements();
-                Log.d(TAG, "_BLOCK_LINE: "+line.getText());
-                str=line.getText();
-                Object a=line.getText();
+               // Log.d(TAG, "_BLOCK_LINE: "+line.getText());
+                str= block.getText();
+               a=line.getText();
 
                 stringList.add(a.toString());
 
@@ -186,71 +186,30 @@ public class MainActivity extends AppCompatActivity {
 
 
                 // Adding text in line to ArrayList
-                test.add(str);
-
-                // saveExcelFile("MyExcel.xls");
-
-
-/*
-                File sdcard = Environment.getExternalStorageDirectory();
-                File dir = new File(sdcard.getAbsolutePath() + "/text/");
-                dir.mkdir();
-                File file = new File(dir, "sample.txt");
-                FileOutputStream os = null;
-                try {
-                    os = new FileOutputStream(file);
-                    byte[] buffer = str.getBytes();
-                    os.write(buffer, 0, buffer.length);
-                    os.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }finally{
-                    if(os != null) {
-                        try {
-                            os.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }*/
-                //    mTv.append(str);
-                //   mTv.append("\n");
-
-
-
-              /*  intent.putStringArrayListExtra("test", test);
-                startActivity(intent);
-                */
+              /*  test.add(str);
+                Log.d("abc",test.toString());*/
 
 
 
 
 
 
-
-
-                //  stringList.add(str);
-
-                //ReadBtn();
 
 
                 for(FirebaseVisionText.Element element : elements){
                     Log.d(TAG, "_ELEMENT: "+element.getText());
 
-                   /* String str = element.getText();
-                    mTv.append(str);
-                    mTv.append("\n");
-*/
+                    String str = element.getText();
+
+                  //  mTv.append("\n");
                     // Extract Numbers from Convert Element Text
                     String[] numbers = str.split("(?<=\\D)(?=\\d)");
                     boolean isDigits = TextUtils.isDigitsOnly(numbers[0]);
 
-                    if(isDigits){
+                   /* if(isDigits){
                         Log.d(TAG, "_NUMBER: "+numbers[0]);
                     }else
-                        Log.d(TAG, "_STRING: "+str);
+                        Log.d(TAG, "_STRING: "+str);*/
 
 
                 }
@@ -259,14 +218,20 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        //ArrayList<String> test = new ArrayList<String>();
-        //test.add(str);
+       /* String mySampleString = stringList.toString();
+        String[] secondarray = mySampleString.split(", ");
+        for (String arr : secondarray) {
+            String[] data = arr.split(" ", 2);
+            System.out.println(data[0]+ " - " +data[1]);
 
+        }
 
+*/
 
         Log.d("test is ",stringList.toString());
-
+        mTv.append(a.toString());
         saveExcelFile();
+        Toast.makeText(MainActivity.this, "data has been saved go to /storage/EXCEL/MyExcel.xls", Toast.LENGTH_LONG).show();
     }
 
 
@@ -284,56 +249,7 @@ public class MainActivity extends AppCompatActivity {
                 .start(this);
     }
 
-    // This function is written by Adil Farooq
-    private void processTextRecognitionResult(FirebaseVisionText texts) {
 
-
-        List<FirebaseVisionText.Block> blocks = texts.getBlocks();
-        if (blocks.size() == 0) {
-
-
-            Toast.makeText(this, "no data is there", Toast.LENGTH_SHORT).show();
-        } else {
-
-            for (FirebaseVisionText.Block block : blocks) {
-
-                String text = block.getLines().get(0).getElements().get(0).getText();
-
-                Log.d(TAG, "_BLOCK: " + block);
-                Log.d(TAG, "_BLOCK_LINE: " + block);
-                Log.d(TAG, "_LINE_ELEMENT_TEXT: " + text);
-                all = new ArrayList<>();
-
-                // Adding new elements to the ArrayList
-                all.add(block.getText());
-
-                TestModel tm = new TestModel();
-
-                for (int i = 0; i < all.size(); i++) {
-
-                    mTv.append(all.get(i));
-                    Log.d("_ALL_LIST_NAME [" + i + "] ", all.get(i));
-
-                    mTv.append("\n");
-
-                    Log.d("_DD", Arrays.toString(all.get(i).split(",")));
-
-                    Object o = Arrays.toString(all.get(0).split(","));
-
-                    Log.d("_OBJECT_IS ", String.valueOf(o));
-
-                    tm.getName(String.valueOf(o));
-                    Log.d("_NAME", "" + tm.getName(String.valueOf(o)));
-
-                    // all.get(i).split(",");
-                    // book();
-
-                }
-
-
-            }
-        }
-    }
 
 
     @Override
@@ -371,18 +287,17 @@ public class MainActivity extends AppCompatActivity {
         if(resultCode == RESULT_OK && data != null){
             if (requestCode == PICK_FROM_GALLERY && data.getData() != null) {
                 Uri uri = data.getData();
-                setImageCropper(uri); // this line is added by Jalal
+                setImageCropper(uri);
                 Log.d(TAG, "_URI: "+uri);
             }
             if(requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE){
                 CropImage.ActivityResult result = CropImage.getActivityResult(data);
                 Uri croppedImageUri = result.getUri();
 
-                // This try-catch code is written by Adil Farooq but copied & moved from
-                // 'PICK_FROM_GALLERY if' by Jalal
+
                 try {
                     bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), croppedImageUri);
-                    // Log.d(TAG, String.valueOf(bitmap));
+
 
                     mimage.setImageBitmap(bitmap);
                 } catch (IOException e) {
@@ -394,81 +309,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-    public void ReadBtn() {
-        //reading text from file
-        try {
 
-
-            File sdcard = Environment.getExternalStorageDirectory();
-            File dir = new File(sdcard.getAbsolutePath() + "/text/");
-            File file = new File(dir, "sample.txt");
-
-//Read text from file
-            StringBuilder text = new StringBuilder();
-
-            try {
-                BufferedReader br = new BufferedReader(new FileReader(file));
-                String line;
-
-                while ((line = br.readLine()) != null) {
-                    text.append(line);
-                    text.append('\n');
-                    Log.d("text is", String.valueOf(text.append(line)));
-
-
-
-                }
-                br.close();
-            }
-            catch (IOException e) {
-                //You'll need to add proper error handling here
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-
-
-  /*  public  boolean isReadStoragePermissionGranted() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
-                Log.v(TAG,"Permission is granted1");
-                return true;
-            } else {
-
-                Log.v(TAG,"Permission is revoked1");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 3);
-                return false;
-            }
-        }
-        else { //permission is automatically granted on sdk<23 upon installation
-            Log.v(TAG,"Permission is granted1");
-            return true;
-        }
-    }
-
-    public  boolean isWriteStoragePermissionGranted() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
-                Log.v(TAG,"Permission is granted2");
-                return true;
-            } else {
-
-                Log.v(TAG,"Permission is revoked2");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 2);
-                return false;
-            }
-        }
-        else { //permission is automatically granted on sdk<23 upon installation
-            Log.v(TAG,"Permission is granted2");
-            return true;
-        }
-    }
-*/
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -528,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
         int k = 1;
         for(int i=1;i<stringList.size();i++){
             row = sheet1.createRow(k);
-            for(int j=0;j<3;j++){
+            for(int j=0;j<=2;j++){
                 c = row.createCell(j);
                 c.setCellValue(stringList.get(i));
                 //  Log.d("list is",stringList.get(i));
