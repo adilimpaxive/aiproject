@@ -4,25 +4,50 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.ServerError;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.googlecode.tesseract.android.TessBaseAPI;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.*;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.ml.vision.FirebaseVision;
@@ -32,29 +57,67 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextDetector;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
-
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.formula.functions.Column;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
+
+
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class MainActivity extends AppCompatActivity {
+RollNum num=new RollNum();
+    String name,uu,studentname,studNameInner,studentatendence;
+    ////////////////////////////////////////////////////////////
+    public static final String PACKAGE_NAME = "com.pakistan.textrecognition_app";
+    public static final String DATA_PATH = Environment
+            .getExternalStorageDirectory().toString() + "/AndroidOCR/";
+    public static final String lang = "eng";
     private static final String TAG = "MainActivity";
+  /*  //private static final String TAG = "TESSERACT";*/
+  //SharedPreferences.Editor editor = getSharedPreferences("abc", MODE_PRIVATE).edit();
+
+   // private TessBaseAPI mTess;
+
+
+
+
+
+    ////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+InputStream io;
+
+OutputStream ou;
+
+
     //  Workbook wb;
     String[] valueToWrite;
     private static final int PICK_FROM_GALLERY = 1;
@@ -62,31 +125,42 @@ public class MainActivity extends AppCompatActivity {
     private Button mBtn, mBtn_detect;
     private ImageView mimage;
     private TextView mTv;
+    private AssetManager assetManager;
     private Context ctx;
     List<String> all;
     List<ArrayList> arrayLists;
-    List<String> stringList;
 
+    TessBaseAPI tessBaseApi = new TessBaseAPI();
     File dir;
     private String dataDi,str;
     File directory, sd, file;
     //WritableWorkbook workbook;
     Bitmap bitmap;
     String txt;
+    private static final int MY_PERMISSIONS_WRITE_EXTERNAL_STORAGE = 1;
     Object a;
+    ArrayList<String>lines;
+    ArrayList<String>studennamearray;
     ArrayList<String> test;
+    ArrayList<String> rolnumaray;
+    ArrayList<String> attendancearray;
     File sdcard;
     WriteGuru99ExcelFile objExcelFile = new WriteGuru99ExcelFile();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         mBtn = findViewById(R.id.button);
         mBtn_detect = findViewById(R.id.button2);
         mimage = findViewById(R.id.imageView);
         mTv = findViewById(R.id.textView);
-        stringList=new ArrayList<String>();
+
      test   = new ArrayList<String>();
+     lines=new ArrayList<String>();
+
+
+
 
 
 
@@ -115,7 +189,14 @@ public class MainActivity extends AppCompatActivity {
         mBtn_detect.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // your handler code here
-                detect();
+              //  detect();
+                try {
+                    text_requestObject();
+                   // saveExcelFile();
+                 //   getOCRResult(bitmap);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
 
             }
@@ -128,6 +209,217 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+
+
+
+    void text_requestObject(){
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url="http://192.168.10.34/attendence/attendence/read_attendence.php";
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d("responce is =", "Response " + response);
+
+                try {
+                    rolnumaray=new ArrayList<String>();
+                    studennamearray=new ArrayList<String>();
+                    attendancearray=new ArrayList<String>();
+                    JSONArray jsonarray = new JSONArray(response);
+                    for (int i = 0; i < jsonarray.length(); i++) {
+                        JSONObject jsonobject = jsonarray.getJSONObject(i);
+                        name = jsonobject.getString("roll_num");
+                        studentname=jsonobject.getString("name");
+                        studentatendence=jsonobject.getString("attendence");
+                       // Toast.makeText(MainActivity.this, ""+studentatendence, Toast.LENGTH_SHORT).show();
+
+                      //  Log.d("name is", name);
+
+                    }
+
+
+
+                    JSONArray jsonarray1 = new JSONArray(name);
+                    for (int j = 0; j < jsonarray1.length(); j++) {
+                        JSONObject jsonobject1 = jsonarray1.getJSONObject(j);
+                        uu = jsonobject1.getString("roll_num");
+                        rolnumaray.add(uu);
+                        //Toast.makeText(MainActivity.this, ""+rolnumaray.toString(), Toast.LENGTH_SHORT).show();
+                        Log.d("is", uu);
+
+
+
+
+
+                    }
+
+
+
+                    JSONArray jsonarray2 = new JSONArray(studentname);
+                    for (int j = 0; j < jsonarray2.length(); j++) {
+                        JSONObject jsonobject2 = jsonarray2.getJSONObject(j);
+                        studNameInner = jsonobject2.getString("names");
+                        studennamearray.add(studNameInner);
+
+                        //Toast.makeText(MainActivity.this, ""+studennamearray.toString(), Toast.LENGTH_SHORT).show();
+
+                    }
+
+
+
+
+                    JSONArray jarray = new JSONArray(studentatendence);
+                    for (int i = 0; i < jarray.length(); i++) {
+                Object oo=   jarray.getJSONArray(i);
+                attendancearray.add(oo.toString());
+                        Toast.makeText(MainActivity.this, ""+attendancearray.toString(), Toast.LENGTH_SHORT).show();
+
+                      /*  JSONArray innerArray = jarray.getJSONArray(i);
+                        for (int j = 0; j < innerArray.length(); j++) {
+                            Object ooo = innerArray.getString(j);
+                            Toast.makeText(MainActivity.this, ""+ooo.toString(), Toast.LENGTH_SHORT).show();
+                        }*/
+
+
+
+                    }
+
+
+
+
+
+
+
+
+
+
+
+                   /* JSONArray jsonarray3 = new JSONArray(studentatendence);
+                    for (int j = 0; j < jsonarray3.length(); j++) {
+                       String a= String.valueOf(jsonarray3.getJSONObject(j));
+
+
+                        Toast.makeText(MainActivity.this, ""+a, Toast.LENGTH_SHORT).show();
+
+                    }
+*/
+
+
+
+
+
+
+                    saveExcelFile();
+
+
+                    Log.d("jasonarray is", jsonarray.toString());
+
+
+
+                } catch(JSONException e){
+                    e.printStackTrace();
+                }
+
+            }
+
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                NetworkResponse response = error.networkResponse;
+                if (error instanceof ServerError && response != null) {
+
+                    try {
+                        String res = new String(response.data,
+                                HttpHeaderParser.parseCharset(response.headers, "utf-8"));
+                        try {
+                            JSONObject jsonObject = new JSONObject(res);
+                            //  JSONObject em = jsonObject.getJSONObject("errors");
+
+                            Log.d("responce 500 is", res);
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        })
+
+
+        {
+
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+
+                Map<String, String> params = new HashMap<String, String>();
+
+                params.put("Content-Type", "application/json");
+
+                // Toast.makeText(MainActivity.this, ""+token, Toast.LENGTH_SHORT).show();
+                return params;
+
+            }
+
+        } ;
+
+
+
+
+        queue.add(stringRequest);
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void getOCRResult(Bitmap bitmap) {
+      /*  TessBaseAPI mTess = new TessBaseAPI();
+       // File myDir = getExternalFilesDir(Environment.MEDIA_MOUNTED);
+        String datapath = Environment.getExternalStorageDirectory() + "/tesseract/";
+       // String language = "eng";
+        File dir = new File(datapath + "tessdata/");
+        if (!dir.exists())
+            dir.mkdirs();
+
+            mTess.init(datapath, "eng");
+*/
+        tessBaseApi.setImage(bitmap);
+        String result = tessBaseApi.getUTF8Text();
+        Toast.makeText(MainActivity.this, "Result : " + result, Toast.LENGTH_LONG).show();
+    }
+
+
+
+
+
 
 
     public void detect() {
@@ -173,14 +465,16 @@ public class MainActivity extends AppCompatActivity {
         for(FirebaseVisionText.Block block : blocks){
             List<FirebaseVisionText.Line> lines = block.getLines();
            // Log.d(TAG, "_BLOCK: "+block.getText());
+            String s=block.getText();
+
 
             for(FirebaseVisionText.Line line : lines){
                 List<FirebaseVisionText.Element> elements = line.getElements();
                // Log.d(TAG, "_BLOCK_LINE: "+line.getText());
-                str= block.getText();
+                //a= block.getText();
                a=line.getText();
 
-                stringList.add(a.toString());
+              //  stringList.add(a.toString());
 
 
 
@@ -228,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
 
 */
 
-        Log.d("test is ",stringList.toString());
+       // Log.d("test is ",stringList.toString());
         mTv.append(a.toString());
         saveExcelFile();
         Toast.makeText(MainActivity.this, "data has been saved go to /storage/EXCEL/MyExcel.xls", Toast.LENGTH_LONG).show();
@@ -311,6 +605,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+
+
+
+
+
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -327,7 +629,8 @@ public class MainActivity extends AppCompatActivity {
         Workbook wb = new HSSFWorkbook();
 
         Cell c = null;
-
+        Cell c1 = null;
+        Row row1=null;
         //Cell style for header row
         CellStyle cs = wb.createCellStyle();
         cs.setFillForegroundColor(HSSFColor.LIME.index);
@@ -336,49 +639,201 @@ public class MainActivity extends AppCompatActivity {
 
         CellStyle cellStyle = wb.createCellStyle();
         cellStyle.setAlignment(HSSFCellStyle.ALIGN_LEFT);
-
+        String[] columns = {"Roll num", "Name", "Attendance"};
         //New Sheet
-        Sheet sheet1 = null;
+       Sheet sheet1 = null;
         sheet1 = wb.createSheet("myOrder");
-
+       // Row row=null;
         // Generate column headings
+
+
+
+
+
+
+
+
+
+        // Create a Font for styling header cells
+        Font headerFont = wb.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 14);
+        headerFont.setColor(IndexedColors.RED.getIndex());
+
+        // Create a CellStyle with the font
+        CellStyle headerCellStyle = wb.createCellStyle();
+        headerCellStyle.setFont(headerFont);
+
+        // Create a Row
+        Row headerRow = sheet1.createRow(0);
+
+        // Create cells
+        for(int i = 0; i < columns.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(columns[i]);
+            cell.setCellStyle(headerCellStyle);
+        }
+
+        // Create Cell Style for formatting Date
+        /*CellStyle dateCellStyle = wb.createCellStyle();
+        dateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd-MM-yyyy"));
+*/
+        // Create Other rows and cells with employees data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         Row row = null;
+      //  Row row1=null;
+     //   int rowCount = 0;
+
+        //  row = sheet1.createRow(0);
 
 
-        int rowCount = 0;
 
-        row = sheet1.createRow(0);
-
-        // c = row.createCell(0);
-
-      /*  for (String value :stringList){
-
-            c.setCellValue(String.valueOf(stringList));
-            row.createCell(1).setCellValue(String.valueOf(stringList));
+       /* //This data needs to be written (Object[])
+        Map<String, Object[]> data = new TreeMap<String, Object[]>();
+        data.put("1", new Object[] {"ID", "NAME", "LASTNAME"});
+        data.put("2", new Object[] {rolnumaray.toString(), studennamearray.toString(), attendancearray.toString()});
 
 
-            c.setCellStyle(cs);
+        //Iterate over data and write to sheet
+        Set<String> keyset = data.keySet();
+        int rownum = 0;
+        for (String key : keyset) {
+            Row row = sheet1.createRow(rownum++);
+            Object[] objArr = data.get(key);
+            int cellnum = 0;
+            for (Object obj : objArr) {
+                Cell cell = row.createCell(cellnum++);
+                if (obj instanceof String)
+                    cell.setCellValue((String) obj);
+                else if (obj instanceof Integer)
+                    cell.setCellValue((Integer) obj);
+            }
+
+        }*/
+
+
+        sheet1.setColumnWidth(1, (15 * 800));
+        sheet1.setColumnWidth(2, (15 * 800));
+        sheet1.setColumnWidth(3, (15 * 800));
+        int rowNum = 0;
+        //int k = 0;
+        for(int i=0;i<rolnumaray.size();i++){
+
+            row = sheet1.createRow(rowNum++);
+            row.createCell(0)
+                    .setCellValue(rolnumaray.get(i));
+
+
+
+
+
+           /* row = sheet1.createRow(0);
+
+               c = row.createCell(0);
+            c.setCellValue(attendancearray.get(i));
+
+              c.setCellStyle(cellStyle);
+
+*/
+            sheet1.setColumnWidth(i, (15 * 800));
 
         }
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+        for (int j=0;j<rolnumaray.size();j++){
+            row = sheet1.createRow(1);
+
+            c1 = row.createCell(0);
+            c1.setCellValue(attendancearray.get(j));
+
+            c1.setCellStyle(cellStyle);
+
+
+            sheet1.setColumnWidth(j, (15 * 800));
+
+
+        }
+
+        for(int l=0;l<studennamearray.size();l++){
+            row1 = sheet1.createRow(1);
+         c1=row1.createCell(1);
+           c1.setCellValue(studennamearray.get(l));
+            //  Log.d("list is",stringList.get(i));
+            c1.setCellStyle(cellStyle);
+            //   val++;
+            sheet1.setColumnWidth(l, (15 * 500));
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+               int l = 0;
+        for(int j=0;j<studennamearray.size();j++){
+            row = sheet1.createRow(l);
+
+            c1 = row.createCell(1);
+            c1.setCellValue(studennamearray.get(j));
+            //  Log.d("list is",stringList.get(i));
+            c1.setCellStyle(cellStyle);
+            //   val++;
+
+            sheet1.setColumnWidth(j, (15 * 500));
+            l++;
+        }
+
+
+
 */
 
-        sheet1.setColumnWidth(0, (15 * 500));
-       /* sheet1.setColumnWidth(1, (15 * 500));
-        sheet1.setColumnWidth(2, (15 * 500));*/
-        int val = 0;
-        int k = 1;
-        for(int i=1;i<stringList.size();i++){
-            row = sheet1.createRow(k);
-            for(int j=0;j<=2;j++){
-                c = row.createCell(j);
-                c.setCellValue(stringList.get(i));
-                //  Log.d("list is",stringList.get(i));
-                c.setCellStyle(cellStyle);
-                //   val++;
-            }
-            sheet1.setColumnWidth(i, (15 * 500));
-            k++;
-        }
+
+
+
+
+
+
+
+
+
         path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/EXCEL/";
         dir = new File(path);
         if (!dir.exists()) {
@@ -421,13 +876,67 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+///////////////////////////////////////////////////////////////////
+
+
+    public void TessOCR(AssetManager assetManager) {
+
+        Log.i(TAG, DATA_PATH);
+
+        this.assetManager = assetManager;
+
+        String[] paths = new String[] { DATA_PATH, DATA_PATH + "tessdata/" };
+
+        for (String path : paths) {
+            File dir = new File(path);
+            if (!dir.exists()) {
+                if (!dir.mkdirs()) {
+                    Log.v(TAG, "ERROR: Creation of directory " + path + " on sdcard failed");
+                    return;
+                } else {
+                    Log.v(TAG, "Created directory " + path + " on sdcard");
+                }
+            }
+        }
+
+        if (!(new File(DATA_PATH + "tessdata/" + lang + ".traineddata")).exists()) {
+            try {
 
 
 
+                io = assetManager.open("tessdata/" + lang + ".traineddata");
+              ou = new FileOutputStream(new File(DATA_PATH + "tessdata/", lang + ".traineddata"));
+
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = io.read(buf)) != -1) {
+                    ou.write(buf, 0, len);
+                }
+                io.close();
+                ou.close();
+
+                Log.v(TAG, "Copied " + lang + " traineddata");
+            } catch (IOException e) {
+                Log.e(TAG, "Was unable to copy " + lang + " traineddata " + e.toString());
+            }
+        }
 
 
+        tessBaseApi.setDebug(true);
+        tessBaseApi.init(DATA_PATH, lang);
+
+    }
+
+   /* public String getResults(Bitmap bitmap)
+    {
+        tessBaseApi.setImage(bitmap);
+        String result = tessBaseApi.getUTF8Text();
+        return result;
+    }
+*/
 
 
+////////////////////////////////////////////////
 
 
 
